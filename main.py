@@ -28,15 +28,14 @@ async def get_pending():
 async def update_invoice(update: InvoiceUpdate):
     try:
         async with httpx.AsyncClient() as client:
-            # Отправляем POST с JSON телом: action=updateInvoice + данные
-            payload = {
-                "action": "updateInvoice",
-                "invoice_id": update.invoice_id,
-                "amount": update.amount
-            }
-            response = await client.post(GOOGLE_SCRIPT_POST_URL, json=payload)
+            # Отправляем JSON как есть
+            response = await client.post(
+                GOOGLE_SCRIPT_POST_URL,
+                json=update.dict()
+            )
             response.raise_for_status()
-            return response.json()
+            # Возвращаем ответ сервера Google Script (текст или JSON)
+            return response.text
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=400, detail=f"Ошибка от Google Script: {e.response.text}")
     except Exception as e:
