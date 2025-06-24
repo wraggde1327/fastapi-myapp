@@ -31,7 +31,8 @@ async def update_invoice(update: InvoiceUpdate):
             # Отправляем JSON как есть
             response = await client.post(
                 GOOGLE_SCRIPT_POST_URL,
-                json=update.dict()
+                json=update.dict(),
+                follow_redirects=True
             )
             response.raise_for_status()
             # Возвращаем ответ сервера Google Script (текст или JSON)
