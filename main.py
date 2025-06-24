@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 import httpx
 
 app = FastAPI()
@@ -9,9 +9,14 @@ GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbym6IzSkaOh6ekkBtSy
 async def root():
     return {"message": "FastAPI работает 👍"}
 
-@app.get("/get-pending")
+@app.get("/getPending")
 async def get_pending():
     async with httpx.AsyncClient() as client:
-        response = await client.get(GOOGLE_SCRIPT_URL, params={"action": "getPending"})
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = await client.get(GOOGLE_SCRIPT_URL, params={"action": "getPending"})
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            return {"error": f"Ошибка при обращении к Google Script: {e.response.status_code}"}
+        except Exception as e:
+            return {"error": f"Произошла ошибка: {str(e)}"}
