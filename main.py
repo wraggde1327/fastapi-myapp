@@ -32,7 +32,6 @@ class InvoiceCreate(BaseModel):
     id: str
     type: str
     sum: float
-    checkbox: bool
     who: str
 
 @app.get("/pending")
