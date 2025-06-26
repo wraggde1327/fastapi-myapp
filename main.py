@@ -86,9 +86,11 @@ async def create_invoice(invoice: InvoiceCreate):
 async def update_invoice(update: InvoiceUpdate):
     try:
         async with httpx.AsyncClient() as client:
+            payload = update.dict()
+            payload["action"] = "updateInvoice"
             response = await client.post(
                 GOOGLE_SCRIPT_POST_URL,
-                json=update.dict(),
+                json=payload,
                 follow_redirects=True
             )
             response.raise_for_status()
@@ -97,3 +99,4 @@ async def update_invoice(update: InvoiceUpdate):
         raise HTTPException(status_code=400, detail=f"Ошибка от Google Script: {e.response.text}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
