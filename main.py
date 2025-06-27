@@ -29,7 +29,7 @@ class InvoiceUpdate(BaseModel):
     amount: float
 
 class InvoiceCreate(BaseModel):
-    id: str
+    id: int
     type: str
     sum: float
     who: str
