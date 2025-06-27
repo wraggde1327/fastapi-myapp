@@ -33,7 +33,26 @@ class InvoiceCreate(BaseModel):
     sum: float
     type: str
     who: str
-
+    
+class ContractCreate(BaseModel):
+    contractNumber: str
+    contractDate: str
+    orgType: str
+    zakazchik: str
+    inn: str
+    ogrn: str
+    lico: str
+    osnovan: str
+    rucl: str
+    adress: str
+    tel: str = None
+    pochta: str
+    bank: str
+    bik: str
+    rs: str
+    ks: str = None
+    tarif: str
+    
 @app.get("/pending")
 async def get_pending():
     try:
@@ -94,6 +113,25 @@ async def update_invoice(update: InvoiceUpdate):
             )
             response.raise_for_status()
             return response.text
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=400, detail=f"Ошибка от Google Script: {e.response.text}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/contracts")
+async def create_contract(contract: ContractCreate):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                GOOGLE_SCRIPT_POST_URL,
+                json={"action": "createContract", **contract.dict()},
+                follow_redirects=True
+            )
+            response.raise_for_status()
+            try:
+                return response.json()
+            except Exception:
+                return {"result": response.text}
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=400, detail=f"Ошибка от Google Script: {e.response.text}")
     except Exception as e:
