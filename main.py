@@ -30,8 +30,8 @@ class InvoiceUpdate(BaseModel):
 
 class InvoiceCreate(BaseModel):
     id: int
-    type: str
     sum: float
+    type: str
     who: str
 
 @app.get("/pending")
