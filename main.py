@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from typing import Optional
+import logging
 
 app = FastAPI()
 
@@ -18,6 +19,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logger = logging.getLogger("uvicorn.error")
 
 GOOGLE_SCRIPT_BASE = "https://script.google.com/macros/s/AKfycbxi4lw0XyZs_Iuasr3T06Jfah-kO6PyaSY4qOLK6SolFZd2mmAxXo7ajcjqcJ2u6wM/exec"
 GOOGLE_SCRIPT_PENDING_URL = f"{GOOGLE_SCRIPT_BASE}?action=getPending"
@@ -46,15 +49,16 @@ class ContractCreate(BaseModel):
     osnovan: str
     rucl: str
     adress: str
-    tel: str = None
+    tel: Optional[str] = None
     pochta: str
     bank: str
     bik: str
     rs: str
-    ks: str = None
+    ks: Optional[str] = None
     tarif: str
     who: str
-    
+
+# GET запросы оставляем без изменений, так как они не долгие
 @app.get("/pending")
 async def get_pending():
     try:
@@ -81,10 +85,9 @@ async def get_clients():
     except Exception as e:
         return {"error": str(e)}
 
-@app.post("/invoices")
-async def create_invoice(invoice: InvoiceCreate):
+# Функции для фоновых задач
+async def call_google_script_create_invoice(invoice: InvoiceCreate):
     try:
-        # Google Script ждет параметры через form-data или query, но если он поддерживает JSON — можно так:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 GOOGLE_SCRIPT_POST_URL,
@@ -92,18 +95,11 @@ async def create_invoice(invoice: InvoiceCreate):
                 follow_redirects=True
             )
             response.raise_for_status()
-            # Возвращаем ответ сервера Google Script (текст или JSON)
-            try:
-                return response.json()
-            except Exception:
-                return {"result": response.text}
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=400, detail=f"Ошибка от Google Script: {e.response.text}")
+            logger.info(f"createInvoice response: {response.text}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Ошибка при вызове createInvoice: {e}")
 
-@app.post("/update_invoice")
-async def update_invoice(update: InvoiceUpdate):
+async def call_google_script_update_invoice(update: InvoiceUpdate):
     try:
         async with httpx.AsyncClient() as client:
             payload = update.dict()
@@ -114,14 +110,11 @@ async def update_invoice(update: InvoiceUpdate):
                 follow_redirects=True
             )
             response.raise_for_status()
-            return response.text
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=400, detail=f"Ошибка от Google Script: {e.response.text}")
+            logger.info(f"updateInvoice response: {response.text}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Ошибка при вызове updateInvoice: {e}")
 
-@app.post("/contracts")
-async def create_contract(contract: ContractCreate):
+async def call_google_script_create_contract(contract: ContractCreate):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -130,12 +123,22 @@ async def create_contract(contract: ContractCreate):
                 follow_redirects=True
             )
             response.raise_for_status()
-            try:
-                return response.json()
-            except Exception:
-                return {"result": response.text}
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=400, detail=f"Ошибка от Google Script: {e.response.text}")
+            logger.info(f"createContract response: {response.text}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Ошибка при вызове createContract: {e}")
 
+# POST эндпоинты с BackgroundTasks
+@app.post("/invoices")
+async def create_invoice(invoice: InvoiceCreate, background_tasks: BackgroundTasks):
+    background_tasks.add_task(call_google_script_create_invoice, invoice)
+    return {"message": "Запрос получен сервером, ожидаем выполнения в гугле"}
+
+@app.post("/update_invoice")
+async def update_invoice(update: InvoiceUpdate, background_tasks: BackgroundTasks):
+    background_tasks.add_task(call_google_script_update_invoice, update)
+    return {"message": "Запрос получен сервером, ожидаем выполнения в гугле"}
+
+@app.post("/contracts")
+async def create_contract(contract: ContractCreate, background_tasks: BackgroundTasks):
+    background_tasks.add_task(call_google_script_create_contract, contract)
+    return {"message": "Запрос получен сервером, ожидаем выполнения в гугле"}
