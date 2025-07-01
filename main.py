@@ -131,14 +131,14 @@ async def call_google_script_create_contract(contract: ContractCreate):
 @app.post("/invoices")
 async def create_invoice(invoice: InvoiceCreate, background_tasks: BackgroundTasks):
     background_tasks.add_task(call_google_script_create_invoice, invoice)
-    return {"message": "Запрос получен сервером, ожидаем выполнения в гугле"}
+    return {"message": "Создание счет получено сервером, ожидаем выполнения в гугле"}
 
 @app.post("/update_invoice")
 async def update_invoice(update: InvoiceUpdate, background_tasks: BackgroundTasks):
     background_tasks.add_task(call_google_script_update_invoice, update)
-    return {"message": "Запрос получен сервером, ожидаем выполнения в гугле"}
+    return {"message": "Проведение платежа получено сервером, ожидаем выполнения в гугле"}
 
 @app.post("/contracts")
 async def create_contract(contract: ContractCreate, background_tasks: BackgroundTasks):
     background_tasks.add_task(call_google_script_create_contract, contract)
-    return {"message": "Запрос получен сервером, ожидаем выполнения в гугле"}
+    return {"message": "Договор получен сервером, ожидаем выполнения в гугле"}
