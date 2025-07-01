@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GOOGLE_SCRIPT_BASE = "https://script.google.com/macros/s/AKfycbym6IzSkaOh6ekkBtSyJn_n8YWFYL17G3HPoFMSDURta3kzSLrMut92qFs9IUJQfxrm0Q/exec"
+GOOGLE_SCRIPT_BASE = "https://script.google.com/macros/s/AKfycbxi4lw0XyZs_Iuasr3T06Jfah-kO6PyaSY4qOLK6SolFZd2mmAxXo7ajcjqcJ2u6wM/exec"
 GOOGLE_SCRIPT_PENDING_URL = f"{GOOGLE_SCRIPT_BASE}?action=getPending"
 GOOGLE_SCRIPT_CLIENTS_URL = f"{GOOGLE_SCRIPT_BASE}?action=getClients"
 GOOGLE_SCRIPT_POST_URL = GOOGLE_SCRIPT_BASE
