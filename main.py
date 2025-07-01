@@ -27,6 +27,7 @@ GOOGLE_SCRIPT_POST_URL = GOOGLE_SCRIPT_BASE
 class InvoiceUpdate(BaseModel):
     invoice_id: int
     amount: float
+    who: str
 
 class InvoiceCreate(BaseModel):
     id: int
@@ -52,6 +53,7 @@ class ContractCreate(BaseModel):
     rs: str
     ks: str = None
     tarif: str
+    who: str
     
 @app.get("/pending")
 async def get_pending():
